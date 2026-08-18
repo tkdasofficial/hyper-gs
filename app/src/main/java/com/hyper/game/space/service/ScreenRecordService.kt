@@ -231,7 +231,8 @@ class ScreenRecordService : Service() {
             type,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
             WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
-            WindowManager.LayoutParams.FLAG_SECURE, // IMPORTANT: Exclude from capture
+            WindowManager.LayoutParams.FLAG_SECURE or
+            WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED, // IMPORTANT: Exclude from capture and force hardware acceleration
             PixelFormat.TRANSLUCENT
         ).apply {
             gravity = Gravity.TOP or Gravity.START
