@@ -114,6 +114,15 @@ fun PermissionsScreen(onBack: () -> Unit) {
                     context.startActivity(intent)
                 }
             )
+
+            PermissionItem(
+                title = "Notification Listener",
+                description = "Required for Advanced DND & Notification Shield.",
+                onClick = {
+                    val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
+                    context.startActivity(intent)
+                }
+            )
             
             // Note: KILL_BACKGROUND_PROCESSES is a normal permission declared in Manifest, no runtime prompt needed,
             // but we add it to the UI for user awareness of the feature requirement.

@@ -41,4 +41,14 @@ object HardwareEncoderUtils {
         }
         return VideoProfile(1920, 1080, 60) // Fallback Default
     }
+
+    fun getProfileFromString(resolutionStr: String, fps: Int): VideoProfile {
+        return when (resolutionStr) {
+            "4K UHD" -> VideoProfile(3840, 2160, fps)
+            "2K QHD" -> VideoProfile(2560, 1440, fps)
+            "1080p FHD" -> VideoProfile(1920, 1080, fps)
+            "720p HD" -> VideoProfile(1280, 720, fps)
+            else -> VideoProfile(1920, 1080, fps)
+        }
+    }
 }

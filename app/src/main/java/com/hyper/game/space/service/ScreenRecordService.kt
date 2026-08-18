@@ -1,5 +1,9 @@
 package com.hyper.game.space.service
 import android.app.Activity
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
+import android.media.AudioPlaybackCaptureConfiguration
+import com.hyper.game.space.data.SettingsRepository
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -36,6 +40,9 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 
+import android.media.audiofx.NoiseSuppressor
+import android.media.audiofx.AcousticEchoCanceler
+
 class ScreenRecordService : Service() {
     companion object {
         const val ACTION_START = "ACTION_START"
@@ -49,6 +56,8 @@ class ScreenRecordService : Service() {
     private var mediaProjection: MediaProjection? = null
     private var virtualDisplay: VirtualDisplay? = null
     private var mediaRecorder: MediaRecorder? = null
+    private var noiseSuppressor: NoiseSuppressor? = null
+    private var echoCanceler: AcousticEchoCanceler? = null
     private var isRecording = false
     private var isPaused = false
 
@@ -121,7 +130,22 @@ class ScreenRecordService : Service() {
     }
 
     private fun setupMediaRecorder() {
-        val profile = HardwareEncoderUtils.getBestSupportedProfile()
+        val repository = SettingsRepository(this)
+        var resolutionProfileStr = "1080p FHD"
+        var fps = 60
+        var bitrate = 16
+        var audioSourceStr = "Dual-Audio"
+
+        runBlocking {
+            resolutionProfileStr = repository.getString(SettingsRepository.RECORDER_RESOLUTION, "1080p FHD").first()
+            fps = repository.getInt(SettingsRepository.RECORDER_FPS, 60).first()
+            bitrate = repository.getInt(SettingsRepository.RECORDER_BITRATE, 16).first()
+            audioSourceStr = repository.getString(SettingsRepository.RECORDER_AUDIO_SOURCE, "Dual-Audio").first()
+        }
+
+        // Determine resolution
+        val profile = HardwareEncoderUtils.getProfileFromString(resolutionProfileStr, fps)
+        
         val dateFormat = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US)
         val file = File(
             Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES),
@@ -132,17 +156,51 @@ class ScreenRecordService : Service() {
             MediaRecorder(this)
         } else {
             MediaRecorder()
-        }.apply {
-            setAudioSource(MediaRecorder.AudioSource.MIC)
-            setVideoSource(MediaRecorder.VideoSource.SURFACE)
-            setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-            setOutputFile(file.absolutePath)
-            setVideoSize(profile.width, profile.height)
-            setVideoEncoder(MediaRecorder.VideoEncoder.H264)
-            setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
-            setVideoEncodingBitRate(16 * 1000 * 1000) // 16 Mbps
-            setVideoFrameRate(profile.fps)
-            prepare()
+        }
+        
+        val audioSource = when (audioSourceStr) {
+            "System Audio" -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) MediaRecorder.AudioSource.REMOTE_SUBMIX else MediaRecorder.AudioSource.MIC
+            "Mic Only" -> MediaRecorder.AudioSource.MIC
+            "Dual-Audio" -> MediaRecorder.AudioSource.MIC // Mix via MIC (since MediaRecorder can't easily dual-stream, rely on OS mixing or mic loopback)
+            "Mute" -> -1
+            else -> MediaRecorder.AudioSource.MIC
+        }
+        
+        try {
+            mediaRecorder?.apply {
+                if (audioSource != -1) {
+                    setAudioSource(audioSource)
+                }
+                setVideoSource(MediaRecorder.VideoSource.SURFACE)
+                setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+                setOutputFile(file.absolutePath)
+                setVideoSize(profile.width, profile.height)
+                setVideoEncoder(MediaRecorder.VideoEncoder.HEVC) // Try HEVC first (hardware)
+                if (audioSource != -1) {
+                    setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+                }
+                setVideoEncodingBitRate(bitrate * 1000 * 1000) // Convert Mbps to bps
+                setVideoFrameRate(profile.fps)
+                prepare()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            // Fallback
+            mediaRecorder?.reset()
+            mediaRecorder?.apply {
+                if (audioSource != -1) {
+                    setAudioSource(audioSource)
+                }
+                setVideoSource(MediaRecorder.VideoSource.SURFACE)
+                setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+                setOutputFile(file.absolutePath)
+                setVideoSize(profile.width, profile.height)
+                setVideoEncoder(MediaRecorder.VideoEncoder.DEFAULT) // Fallback default
+                if (audioSource != -1) {
+                    setAudioEncoder(MediaRecorder.AudioEncoder.DEFAULT)
+                }
+                prepare()
+            }
         }
     }
 

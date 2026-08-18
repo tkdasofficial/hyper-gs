@@ -150,6 +150,20 @@ class FeaturesViewModel(application: Application) : AndroidViewModel(application
         .stateIn(viewModelScope, SharingStarted.Lazily, true)
     val autoTouchHeat = repository.getBoolean(SettingsRepository.AUTO_TOUCH_HEAT, true)
         .stateIn(viewModelScope, SharingStarted.Lazily, true)
+        
+    // Recorder States
+    val recorderEnabled = repository.getBoolean(SettingsRepository.RECORDER_ENABLED, true)
+        .stateIn(viewModelScope, SharingStarted.Lazily, true)
+    val recorderResolution = repository.getString(SettingsRepository.RECORDER_RESOLUTION, "1080p FHD")
+        .stateIn(viewModelScope, SharingStarted.Lazily, "1080p FHD")
+    val recorderFps = repository.getInt(SettingsRepository.RECORDER_FPS, 60)
+        .stateIn(viewModelScope, SharingStarted.Lazily, 60)
+    val recorderBitrate = repository.getInt(SettingsRepository.RECORDER_BITRATE, 16)
+        .stateIn(viewModelScope, SharingStarted.Lazily, 16)
+    val recorderAudioSource = repository.getString(SettingsRepository.RECORDER_AUDIO_SOURCE, "Dual-Audio")
+        .stateIn(viewModelScope, SharingStarted.Lazily, "Dual-Audio")
+    val recorderOrientation = repository.getString(SettingsRepository.RECORDER_ORIENTATION, "Auto-Detect")
+        .stateIn(viewModelScope, SharingStarted.Lazily, "Auto-Detect")
 
     // Update Functions
     fun setBoolean(key: androidx.datastore.preferences.core.Preferences.Key<Boolean>, value: Boolean) {
@@ -157,6 +171,9 @@ class FeaturesViewModel(application: Application) : AndroidViewModel(application
     }
     fun setFloat(key: androidx.datastore.preferences.core.Preferences.Key<Float>, value: Float) {
         viewModelScope.launch { repository.saveFloat(key, value) }
+    }
+    fun setInt(key: androidx.datastore.preferences.core.Preferences.Key<Int>, value: Int) {
+        viewModelScope.launch { repository.saveInt(key, value) }
     }
     fun setString(key: androidx.datastore.preferences.core.Preferences.Key<String>, value: String) {
         viewModelScope.launch { repository.saveString(key, value) }

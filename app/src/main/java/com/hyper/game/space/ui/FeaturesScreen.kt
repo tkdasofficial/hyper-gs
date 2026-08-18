@@ -21,7 +21,7 @@ import com.hyper.game.space.viewmodel.FeaturesViewModel
 import com.hyper.game.space.data.SettingsRepository
 
 enum class ActiveModal {
-    NONE, VSENSITIVITY, HARDWARE_DISPLAY, DND, THERMAL, GPU, TOUCH_RESPONSE, AUDIO_EQ, RESOLUTION_SCALER, GHOST_TOUCH
+    NONE, VSENSITIVITY, HARDWARE_DISPLAY, DND, THERMAL, GPU, TOUCH_RESPONSE, AUDIO_EQ, RESOLUTION_SCALER, GHOST_TOUCH, SCREEN_RECORDER
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -79,6 +79,15 @@ fun FeaturesScreen(viewModel: FeaturesViewModel = viewModel()) {
 
         // --- SYSTEM OPTIMIZATIONS ---
         item { SectionHeader("System Optimizations") }
+        item {
+            val recEnabled by viewModel.recorderEnabled.collectAsState()
+            FeatureModalCard(
+                title = "Hardware Screen Recorder",
+                status = if (recEnabled) "Recording Engine Enabled" else "Recording Engine Disabled",
+                icon = Icons.Default.Videocam,
+                onClick = { activeModal = ActiveModal.SCREEN_RECORDER }
+            )
+        }
         item {
             FeatureToggleCard(
                 title = "Overload Optimizer (Anti-Hang Engine)",
@@ -265,6 +274,7 @@ fun FeaturesScreen(viewModel: FeaturesViewModel = viewModel()) {
                     ActiveModal.AUDIO_EQ -> AudioEqModalContent(viewModel)
                     ActiveModal.RESOLUTION_SCALER -> ResolutionScalerModalContent(viewModel)
                     ActiveModal.GHOST_TOUCH -> GhostTouchModalContent(viewModel)
+                    ActiveModal.SCREEN_RECORDER -> ScreenRecorderModalContent(viewModel)
                     ActiveModal.NONE -> {}
                 }
             }
@@ -470,6 +480,71 @@ fun GhostTouchModalContent(viewModel: FeaturesViewModel) {
         enabled = calib == "Safe" || calib == "Calibrated & Safe"
     ) {
         Text(if (calib == "Calibrating...") "Calibrating Digitizer..." else "Calibrate Digitizer Now")
+    }
+}
+
+@Composable
+fun ScreenRecorderModalContent(viewModel: FeaturesViewModel) {
+    val enabled by viewModel.recorderEnabled.collectAsState()
+    val res by viewModel.recorderResolution.collectAsState()
+    val fps by viewModel.recorderFps.collectAsState()
+    val bitrate by viewModel.recorderBitrate.collectAsState()
+    val audio by viewModel.recorderAudioSource.collectAsState()
+    val orientation by viewModel.recorderOrientation.collectAsState()
+
+    Text("Hardware Screen Recorder", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(bottom = 16.dp))
+    ToggleSetting("Enable Recording Engine", enabled) { viewModel.setBoolean(SettingsRepository.RECORDER_ENABLED, it) }
+    
+    Spacer(modifier = Modifier.height(16.dp))
+    Text("Resolution", style = MaterialTheme.typography.labelLarge)
+    Row(modifier = Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        ProfileChip("720p HD", res == "720p HD") { viewModel.setString(SettingsRepository.RECORDER_RESOLUTION, "720p HD") }
+        ProfileChip("1080p FHD", res == "1080p FHD") { viewModel.setString(SettingsRepository.RECORDER_RESOLUTION, "1080p FHD") }
+        ProfileChip("2K QHD", res == "2K QHD") { viewModel.setString(SettingsRepository.RECORDER_RESOLUTION, "2K QHD") }
+        ProfileChip("4K UHD", res == "4K UHD") { viewModel.setString(SettingsRepository.RECORDER_RESOLUTION, "4K UHD") }
+    }
+    
+    Spacer(modifier = Modifier.height(16.dp))
+    Text("Frame Rate", style = MaterialTheme.typography.labelLarge)
+    Row(modifier = Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        ProfileChip("30 FPS", fps == 30) { viewModel.setInt(SettingsRepository.RECORDER_FPS, 30) }
+        ProfileChip("60 FPS", fps == 60) { viewModel.setInt(SettingsRepository.RECORDER_FPS, 60) }
+        ProfileChip("90 FPS", fps == 90) { viewModel.setInt(SettingsRepository.RECORDER_FPS, 90) }
+    }
+    
+    Spacer(modifier = Modifier.height(16.dp))
+    Column(modifier = Modifier.padding(vertical = 8.dp)) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text(text = "Bitrate (Mbps)", style = MaterialTheme.typography.bodyMedium)
+            Text(text = "${bitrate} Mbps", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
+        }
+        Slider(
+            value = bitrate.toFloat(),
+            valueRange = 1f..64f,
+            onValueChange = { viewModel.setInt(SettingsRepository.RECORDER_BITRATE, it.toInt()) }
+        )
+    }
+
+    Spacer(modifier = Modifier.height(16.dp))
+    Text("Audio Source", style = MaterialTheme.typography.labelLarge)
+    Column(modifier = Modifier.padding(top = 8.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            ProfileChip("System Audio", audio == "System Audio") { viewModel.setString(SettingsRepository.RECORDER_AUDIO_SOURCE, "System Audio") }
+            ProfileChip("Mic Only", audio == "Mic Only") { viewModel.setString(SettingsRepository.RECORDER_AUDIO_SOURCE, "Mic Only") }
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            ProfileChip("Dual-Audio", audio == "Dual-Audio") { viewModel.setString(SettingsRepository.RECORDER_AUDIO_SOURCE, "Dual-Audio") }
+            ProfileChip("Mute", audio == "Mute") { viewModel.setString(SettingsRepository.RECORDER_AUDIO_SOURCE, "Mute") }
+        }
+    }
+    
+    Spacer(modifier = Modifier.height(16.dp))
+    Text("Orientation", style = MaterialTheme.typography.labelLarge)
+    Row(modifier = Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        ProfileChip("Auto", orientation == "Auto-Detect") { viewModel.setString(SettingsRepository.RECORDER_ORIENTATION, "Auto-Detect") }
+        ProfileChip("Landscape", orientation == "Landscape") { viewModel.setString(SettingsRepository.RECORDER_ORIENTATION, "Landscape") }
+        ProfileChip("Portrait", orientation == "Portrait") { viewModel.setString(SettingsRepository.RECORDER_ORIENTATION, "Portrait") }
     }
 }
 

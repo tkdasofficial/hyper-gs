@@ -53,6 +53,14 @@ class SettingsRepository(private val context: Context) {
 
         val GHOST_FILTER = booleanPreferencesKey("ghost_filter")
         val AUTO_TOUCH_HEAT = booleanPreferencesKey("auto_touch_heat")
+        
+        // Recorder Keys
+        val RECORDER_ENABLED = booleanPreferencesKey("recorder_enabled")
+        val RECORDER_RESOLUTION = stringPreferencesKey("recorder_resolution")
+        val RECORDER_FPS = intPreferencesKey("recorder_fps")
+        val RECORDER_BITRATE = intPreferencesKey("recorder_bitrate")
+        val RECORDER_AUDIO_SOURCE = stringPreferencesKey("recorder_audio_source")
+        val RECORDER_ORIENTATION = stringPreferencesKey("recorder_orientation")
     }
 
     suspend fun saveBoolean(key: Preferences.Key<Boolean>, value: Boolean) {
@@ -60,6 +68,10 @@ class SettingsRepository(private val context: Context) {
     }
 
     suspend fun saveFloat(key: Preferences.Key<Float>, value: Float) {
+        context.dataStore.edit { prefs -> prefs[key] = value }
+    }
+    
+    suspend fun saveInt(key: Preferences.Key<Int>, value: Int) {
         context.dataStore.edit { prefs -> prefs[key] = value }
     }
 
@@ -71,6 +83,9 @@ class SettingsRepository(private val context: Context) {
         context.dataStore.data.map { prefs -> prefs[key] ?: default }
 
     fun getFloat(key: Preferences.Key<Float>, default: Float): Flow<Float> =
+        context.dataStore.data.map { prefs -> prefs[key] ?: default }
+        
+    fun getInt(key: Preferences.Key<Int>, default: Int): Flow<Int> =
         context.dataStore.data.map { prefs -> prefs[key] ?: default }
 
     fun getString(key: Preferences.Key<String>, default: String): Flow<String> =

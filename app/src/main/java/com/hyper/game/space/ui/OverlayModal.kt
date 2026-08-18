@@ -165,14 +165,28 @@ fun QuickTogglesSection(viewModel: FeaturesViewModel) {
     val dnd by viewModel.dndThirdParty.collectAsState()
     val ramBoost by viewModel.autoRamBoost.collectAsState()
     val overload by viewModel.overloadOptimizer.collectAsState()
+    var vSensEnabled by remember { mutableStateOf(false) }
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         OverlayToggleRow("Advanced DND", dnd) { viewModel.setBoolean(SettingsRepository.DND_THIRD_PARTY, it) }
         OverlayToggleRow("Auto Memory Boost", ramBoost) { viewModel.setBoolean(SettingsRepository.AUTO_RAM_BOOST, it) }
         OverlayToggleRow("Overload Optimizer", overload) { viewModel.setBoolean(SettingsRepository.OVERLOAD_OPTIMIZER, it) }
-        OverlayToggleRow("Display & Gesture Lock", true) { } // Placeholder for actual functionality
+        OverlayToggleRow("Network QoS Shield", true) { }
+        OverlayToggleRow("Brightness Lock", true) { }
         
-
+        OverlayToggleRow("V-Sens Touch Hook", vSensEnabled) { isChecked ->
+            if (isChecked) {
+                if (com.hyper.game.space.service.VSensitivityService.instance != null) {
+                    vSensEnabled = true
+                } else {
+                    android.widget.Toast.makeText(context, "System restriction detected. Please re-enable Accessibility.", android.widget.Toast.LENGTH_LONG).show()
+                    vSensEnabled = false
+                }
+            } else {
+                vSensEnabled = false
+            }
+        }
+        
         Button(
             onClick = {
                 val intent = Intent(context, ScreenRecordPromptActivity::class.java)

@@ -1,5 +1,4 @@
 package com.hyper.game.space.service
-import com.hyper.game.space.ui.ActivationHud
 
 import android.app.Service
 import android.content.Context
@@ -37,10 +36,27 @@ class OverlayService : Service() {
         
         lifecycleOwner = MyLifecycleOwner().apply { init() }
         
+        antiHangEngine = com.hyper.game.space.utils.AntiHangEngine(this)
+        antiHangEngine?.boostProcessPriority()
+        
         setupCornerTriggers()
+        startMemoryCheckLoop()
     }
 
-    private var hudView: ComposeView? = null
+    private var hudView: android.view.View? = null
+    private var antiHangEngine: com.hyper.game.space.utils.AntiHangEngine? = null
+    private val handler = android.os.Handler(android.os.Looper.getMainLooper())
+    private var memoryCheckRunnable: Runnable? = null
+    
+    private fun startMemoryCheckLoop() {
+        memoryCheckRunnable = object : Runnable {
+            override fun run() {
+                antiHangEngine?.optimizeMemoryIfCritical()
+                handler.postDelayed(this, 30000) // Check every 30 seconds
+            }
+        }
+        handler.post(memoryCheckRunnable!!)
+    }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.getBooleanExtra("SHOW_HUD", false) == true) {
@@ -52,14 +68,7 @@ class OverlayService : Service() {
     private fun showHud() {
         if (hudView != null) return
         
-        hudView = ComposeView(this).apply {
-            setContent {
-                ActivationHud(onFinish = { hideHud() })
-            }
-            setViewTreeLifecycleOwner(lifecycleOwner)
-            setViewTreeViewModelStoreOwner(lifecycleOwner)
-            setViewTreeSavedStateRegistryOwner(lifecycleOwner)
-        }
+        hudView = com.hyper.game.space.ui.ActivationHudView(this) { hideHud() }
 
         val type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) 
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY else WindowManager.LayoutParams.TYPE_PHONE
@@ -70,7 +79,7 @@ class OverlayService : Service() {
             PixelFormat.TRANSLUCENT
         ).apply { gravity = Gravity.CENTER }
 
-        windowManager?.addView(hudView, params)
+        windowManager?.addView(hudView as android.view.View, params)
     }
 
     private fun hideHud() {
@@ -151,6 +160,7 @@ class OverlayService : Service() {
         topRightView?.let { windowManager?.removeView(it) }
         hideModal()
         lifecycleOwner?.destroy()
+        handler.removeCallbacksAndMessages(null)
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
