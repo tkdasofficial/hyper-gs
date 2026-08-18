@@ -5,7 +5,6 @@ import android.animation.ObjectAnimator
 import android.content.Context
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
-import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
@@ -22,7 +21,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-data class HudItem(val label: String, var state: SlotState = SlotState.WAITING)
+data class HudItem(val label: String, val isActive: Boolean, var state: SlotState = SlotState.WAITING)
 
 enum class SlotState { WAITING, LOADING, DONE }
 
@@ -30,8 +29,8 @@ class HudAdapter(private val items: List<HudItem>) : RecyclerView.Adapter<HudAda
 
     class HudViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val labelView: TextView = view.findViewWithTag("label")
+        val statusView: TextView = view.findViewWithTag("status")
         val progressView: ProgressBar = view.findViewWithTag("progress")
-        val checkView: ImageView = view.findViewWithTag("check")
         val container: LinearLayout = view as LinearLayout
     }
 
@@ -42,14 +41,15 @@ class HudAdapter(private val items: List<HudItem>) : RecyclerView.Adapter<HudAda
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
             layoutParams = ViewGroup.MarginLayoutParams(
-                (260 * context.resources.displayMetrics.density).toInt(),
-                (56 * context.resources.displayMetrics.density).toInt()
+                (280 * context.resources.displayMetrics.density).toInt(),
+                (60 * context.resources.displayMetrics.density).toInt()
             ).apply {
                 setMargins(0, (4 * context.resources.displayMetrics.density).toInt(), 0, (4 * context.resources.displayMetrics.density).toInt())
             }
             background = GradientDrawable().apply {
                 setColor(Color.parseColor("#1E1E1E"))
                 cornerRadius = 12f * context.resources.displayMetrics.density
+                setStroke((1 * context.resources.displayMetrics.density).toInt(), Color.parseColor("#333333"))
             }
             setPadding(
                 (20 * context.resources.displayMetrics.density).toInt(), 0,
@@ -57,13 +57,26 @@ class HudAdapter(private val items: List<HudItem>) : RecyclerView.Adapter<HudAda
             )
         }
 
+        val textContainer = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+        }
+
         val label = TextView(context).apply {
             tag = "label"
             setTextColor(Color.parseColor("#EEEEEE"))
             textSize = 14f
-            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+            setTypeface(null, android.graphics.Typeface.BOLD)
         }
-        
+
+        val status = TextView(context).apply {
+            tag = "status"
+            textSize = 12f
+        }
+
+        textContainer.addView(label)
+        textContainer.addView(status)
+
         val progress = ProgressBar(context).apply {
             tag = "progress"
             layoutParams = LinearLayout.LayoutParams(
@@ -73,19 +86,8 @@ class HudAdapter(private val items: List<HudItem>) : RecyclerView.Adapter<HudAda
             visibility = View.GONE
         }
         
-        val check = ImageView(context).apply {
-            tag = "check"
-            setImageResource(android.R.drawable.checkbox_on_background) // standard check
-            layoutParams = LinearLayout.LayoutParams(
-                (24 * context.resources.displayMetrics.density).toInt(),
-                (24 * context.resources.displayMetrics.density).toInt()
-            )
-            visibility = View.GONE
-        }
-
-        container.addView(label)
+        container.addView(textContainer)
         container.addView(progress)
-        container.addView(check)
 
         return HudViewHolder(container)
     }
@@ -97,18 +99,30 @@ class HudAdapter(private val items: List<HudItem>) : RecyclerView.Adapter<HudAda
         when (item.state) {
             SlotState.WAITING -> {
                 holder.progressView.visibility = View.GONE
-                holder.checkView.visibility = View.GONE
+                holder.statusView.text = "Pending..."
+                holder.statusView.setTextColor(Color.GRAY)
                 holder.container.alpha = 0.5f
+                (holder.container.background as GradientDrawable).setStroke((1 * holder.container.context.resources.displayMetrics.density).toInt(), Color.parseColor("#333333"))
             }
             SlotState.LOADING -> {
                 holder.progressView.visibility = View.VISIBLE
-                holder.checkView.visibility = View.GONE
+                holder.statusView.text = "Initializing..."
+                holder.statusView.setTextColor(Color.LTGRAY)
                 holder.container.alpha = 1.0f
+                (holder.container.background as GradientDrawable).setStroke((1 * holder.container.context.resources.displayMetrics.density).toInt(), Color.CYAN)
             }
             SlotState.DONE -> {
                 holder.progressView.visibility = View.GONE
-                holder.checkView.visibility = View.VISIBLE
                 holder.container.alpha = 1.0f
+                if (item.isActive) {
+                    holder.statusView.text = "ACTIVE"
+                    holder.statusView.setTextColor(Color.CYAN)
+                    (holder.container.background as GradientDrawable).setStroke((1 * holder.container.context.resources.displayMetrics.density).toInt(), Color.CYAN)
+                } else {
+                    holder.statusView.text = "DISABLED"
+                    holder.statusView.setTextColor(Color.GRAY)
+                    (holder.container.background as GradientDrawable).setStroke((1 * holder.container.context.resources.displayMetrics.density).toInt(), Color.parseColor("#333333"))
+                }
             }
         }
     }
@@ -116,16 +130,9 @@ class HudAdapter(private val items: List<HudItem>) : RecyclerView.Adapter<HudAda
     override fun getItemCount() = items.size
 }
 
-class ActivationHudView(context: Context, private val onFinish: () -> Unit) : FrameLayout(context) {
-
+class ActivationHudView(context: Context, activeFeatures: List<Pair<String, Boolean>>, private val onFinish: () -> Unit) : FrameLayout(context) {
     private val recyclerView = RecyclerView(context)
-    private val items = listOf(
-        HudItem("Memory Boost"),
-        HudItem("Network QoS Policy"),
-        HudItem("Overload Shield"),
-        HudItem("DND Rules Engine"),
-        HudItem("V-Sens Touch Hook")
-    )
+    private val items = activeFeatures.map { HudItem(it.first, it.second) }
     private val adapter = HudAdapter(items)
 
     init {
@@ -165,18 +172,20 @@ class ActivationHudView(context: Context, private val onFinish: () -> Unit) : Fr
                     }
                 }
                 
-                delay(200) // spinner time
+                delay(150) // spinner time
                 items[i].state = SlotState.DONE
                 adapter.notifyItemChanged(i)
-                delay(200) // tick time
+                delay(150) // tick time
             }
             
-            delay(400)
+            delay(1200)
+
             val fadeOut = ObjectAnimator.ofFloat(this@ActivationHudView, "alpha", 1f, 0f).apply {
-                duration = 300
+                duration = 400
             }
             fadeOut.start()
-            delay(300)
+
+            delay(400)
             onFinish()
         }
     }

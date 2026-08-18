@@ -48,9 +48,9 @@ fun CornerTrigger(isLeft: Boolean, onTriggered: () -> Unit) {
                         // If left corner: drag must be positive X and positive Y
                         // If right corner: drag must be negative X and positive Y
                         val isDiagonal = if (isLeft) {
-                            dx > 5 && dy > 5 && abs(dx - dy) < 20
+                            dx > 15 && dy > 15
                         } else {
-                            dx < -5 && dy > 5 && abs(abs(dx) - dy) < 20
+                            dx < -15 && dy > 15
                         }
 
                         if (isDiagonal) {
@@ -168,13 +168,13 @@ fun QuickTogglesSection(viewModel: FeaturesViewModel) {
     var vSensEnabled by remember { mutableStateOf(false) }
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        OverlayToggleRow("Advanced DND", dnd) { viewModel.setBoolean(SettingsRepository.DND_THIRD_PARTY, it) }
-        OverlayToggleRow("Auto Memory Boost", ramBoost) { viewModel.setBoolean(SettingsRepository.AUTO_RAM_BOOST, it) }
-        OverlayToggleRow("Overload Optimizer", overload) { viewModel.setBoolean(SettingsRepository.OVERLOAD_OPTIMIZER, it) }
-        OverlayToggleRow("Network QoS Shield", true) { }
+        OverlayToggleRow("Do Not Disturb", dnd) { viewModel.setBoolean(SettingsRepository.DND_THIRD_PARTY, it) }
+        OverlayToggleRow("Memory Optimizer", ramBoost) { viewModel.setBoolean(SettingsRepository.AUTO_RAM_BOOST, it) }
+        OverlayToggleRow("System Optimizer", overload) { viewModel.setBoolean(SettingsRepository.OVERLOAD_OPTIMIZER, it) }
+        OverlayToggleRow("Network Traffic Manager", true) { }
         OverlayToggleRow("Brightness Lock", true) { }
         
-        OverlayToggleRow("V-Sens Touch Hook", vSensEnabled) { isChecked ->
+        OverlayToggleRow("Virtual Sensitivity", vSensEnabled) { isChecked ->
             if (isChecked) {
                 if (com.hyper.game.space.service.VSensitivityService.instance != null) {
                     vSensEnabled = true

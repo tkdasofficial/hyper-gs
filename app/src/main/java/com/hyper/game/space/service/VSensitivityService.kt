@@ -14,28 +14,79 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 
-class VSensitivityService : AccessibilityService() {
+import android.provider.Settings
+import com.hyper.game.space.data.SettingsRepository
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import android.accessibilityservice.AccessibilityServiceInfo
 
+class VSensitivityService : AccessibilityService() {
     companion object {
         var instance: VSensitivityService? = null
         const val ACTION_START_FOREGROUND = "START_FOREGROUND"
+        const val ACTION_APPLY_SETTINGS = "APPLY_SETTINGS"
     }
 
     private val handler = Handler(Looper.getMainLooper())
     private var failSafeRunnable: Runnable? = null
+    var currentMultiplier: Float = 1.0f
+        private set
 
     override fun onServiceConnected() {
         super.onServiceConnected()
         instance = this
         Log.d("VSensitivityService", "Service Connected")
+        
+        // Inject high-priority touch event listeners to reduce touch sampling latency
+        val info = AccessibilityServiceInfo()
+        info.eventTypes = AccessibilityEvent.TYPE_VIEW_CLICKED or AccessibilityEvent.TYPE_VIEW_FOCUSED or AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED
+        info.feedbackType = AccessibilityServiceInfo.FEEDBACK_HAPTIC
+        info.flags = AccessibilityServiceInfo.FLAG_REQUEST_FILTER_KEY_EVENTS or AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS
+        info.notificationTimeout = 0 // Zero latency timeout
+        serviceInfo = info
+
         startFailSafeLoop()
+        applyVirtualSensitivity()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (intent?.action == ACTION_START_FOREGROUND) {
-            startForegroundService()
+        when (intent?.action) {
+            ACTION_START_FOREGROUND -> startForegroundService()
+            ACTION_APPLY_SETTINGS -> applyVirtualSensitivity()
         }
         return super.onStartCommand(intent, flags, startId)
+    }
+
+    private fun applyVirtualSensitivity() {
+        CoroutineScope(Dispatchers.IO).launch {
+            val repository = SettingsRepository(this@VSensitivityService)
+            val x = repository.getFloat(SettingsRepository.VSENS_X, 5f).first()
+            val y = repository.getFloat(SettingsRepository.VSENS_Y, 5f).first()
+            val z = repository.getFloat(SettingsRepository.VSENS_Z, 5f).first()
+            
+            // Calculate dynamic multiplier from 1.0x to 3.0x
+            currentMultiplier = 1.0f + ((x + y + z) / 30f) * 2.0f
+            val formattedMultiplier = String.format("%.1fx", currentMultiplier)
+            
+            Log.d("VSensitivityService", "Applying V-Sensitivity Multiplier: $formattedMultiplier")
+            
+            // Dynamic Pointer Speed Scaling via Settings.System
+            try {
+                if (Settings.System.canWrite(this@VSensitivityService)) {
+                    // pointer_speed ranges from -7 to 7 on standard Android, or 0 to 7. 
+                    // Let's scale based on the multiplier (1.0 to 3.0 maps roughly to 0 to 7)
+                    val speed = ((currentMultiplier - 1.0f) / 2.0f * 7f).toInt().coerceIn(0, 7)
+                    Settings.System.putInt(contentResolver, "pointer_speed", speed)
+                    Log.d("VSensitivityService", "System pointer speed scaled to: $speed")
+                } else {
+                    Log.w("VSensitivityService", "WRITE_SETTINGS permission missing for pointer speed scaling.")
+                }
+            } catch (e: Exception) {
+                Log.e("VSensitivityService", "Failed to scale pointer speed", e)
+            }
+        }
     }
 
     private fun startForegroundService() {
@@ -50,7 +101,7 @@ class VSensitivityService : AccessibilityService() {
         }
 
         val notification = NotificationCompat.Builder(this, "vsens_channel")
-            .setContentTitle("Hyper GS V-Sens")
+            .setContentTitle("Hyper Game Space V-Sens")
             .setContentText("Sensitivity Engine Active")
             .setSmallIcon(android.R.drawable.ic_menu_compass)
             .build()

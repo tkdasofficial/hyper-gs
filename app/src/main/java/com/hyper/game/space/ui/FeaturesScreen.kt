@@ -82,7 +82,7 @@ fun FeaturesScreen(viewModel: FeaturesViewModel = viewModel()) {
         item {
             val recEnabled by viewModel.recorderEnabled.collectAsState()
             FeatureModalCard(
-                title = "Hardware Screen Recorder",
+                title = "Screen Recorder",
                 status = if (recEnabled) "Recording Engine Enabled" else "Recording Engine Disabled",
                 icon = Icons.Default.Videocam,
                 onClick = { activeModal = ActiveModal.SCREEN_RECORDER }
@@ -90,7 +90,7 @@ fun FeaturesScreen(viewModel: FeaturesViewModel = viewModel()) {
         }
         item {
             FeatureToggleCard(
-                title = "Overload Optimizer (Anti-Hang Engine)",
+                title = "System Optimizer",
                 status = if (overloadOptimizer) "Overload Shield: Active" else "Overload Shield: Disabled",
                 icon = Icons.Default.Security,
                 state = overloadOptimizer,
@@ -99,8 +99,8 @@ fun FeaturesScreen(viewModel: FeaturesViewModel = viewModel()) {
         }
         item {
             FeatureToggleCard(
-                title = "Auto RAM & Game Boost",
-                status = if (autoRamBoost) "Auto-Clean Active" else "Auto-Clean Disabled",
+                title = "Memory Optimizer",
+                status = "Dynamic RAM Management",
                 icon = Icons.Default.Memory,
                 state = autoRamBoost,
                 onCheckedChange = { viewModel.setBoolean(SettingsRepository.AUTO_RAM_BOOST, it) }
@@ -108,8 +108,8 @@ fun FeaturesScreen(viewModel: FeaturesViewModel = viewModel()) {
         }
         item {
             FeatureToggleCard(
-                title = "Force Stop & Deep Kill Engine",
-                status = if (deepKillEngine) "Aggressive Deep Kill: Active" else "Deep Kill Disabled",
+                title = "Force Stop Activities",
+                status = "Force stop background apps",
                 icon = Icons.Default.Stop,
                 state = deepKillEngine,
                 onCheckedChange = { viewModel.setBoolean(SettingsRepository.DEEP_KILL_ENGINE, it) }
@@ -117,7 +117,7 @@ fun FeaturesScreen(viewModel: FeaturesViewModel = viewModel()) {
         }
         item {
             FeatureToggleCard(
-                title = "FPS Drop Shield",
+                title = "Frame Rate Stabilizer",
                 status = if (fpsDropShield) "FPS Drop Shield: Enabled" else "FPS Drop Shield: Disabled",
                 icon = Icons.Default.Shield,
                 state = fpsDropShield,
@@ -126,7 +126,7 @@ fun FeaturesScreen(viewModel: FeaturesViewModel = viewModel()) {
         }
         item {
             FeatureToggleCard(
-                title = "Automatic Game Crash Recovery",
+                title = "Crash Recovery",
                 status = if (autoCrashRecovery) "Auto Crash-Recovery Monitor: Active" else "Auto Crash-Recovery Monitor: Standby",
                 icon = Icons.Default.Healing,
                 state = autoCrashRecovery,
@@ -138,15 +138,15 @@ fun FeaturesScreen(viewModel: FeaturesViewModel = viewModel()) {
         item { SectionHeader("Display & Graphics") }
         item {
             FeatureModalCard(
-                title = "Hardware Display & Refresh Rate Lock",
-                status = if (refreshLock) "Locked at ${liveFps}Hz" else "Sync: ${liveFps}Hz",
+                title = "Refresh Rate Stabilizer",
+                status = "Locks stable refresh rate",
                 icon = Icons.Default.MonitorHeart,
                 onClick = { activeModal = ActiveModal.HARDWARE_DISPLAY }
             )
         }
         item {
             FeatureModalCard(
-                title = "GPU Render Optimizer",
+                title = "Graphics Renderer",
                 status = "$renderer Optimized",
                 icon = Icons.Default.GraphicEq,
                 onClick = { activeModal = ActiveModal.GPU }
@@ -154,7 +154,7 @@ fun FeaturesScreen(viewModel: FeaturesViewModel = viewModel()) {
         }
         item {
             FeatureModalCard(
-                title = "Screen Resolution & Density Scaler",
+                title = "Resolution Scaler",
                 status = "Resolution: $resolutionProfile",
                 icon = Icons.Default.FitScreen,
                 onClick = { activeModal = ActiveModal.RESOLUTION_SCALER }
@@ -162,8 +162,8 @@ fun FeaturesScreen(viewModel: FeaturesViewModel = viewModel()) {
         }
         item {
             FeatureToggleCard(
-                title = "Screen & Brightness Lock",
-                status = if (screenBrightnessLock) "Brightness & Gestures Locked" else "Unlocked",
+                title = "Brightness Lock",
+                status = "Locks screen brightness level",
                 icon = Icons.Default.BrightnessAuto,
                 state = screenBrightnessLock,
                 onCheckedChange = { viewModel.setBoolean(SettingsRepository.SCREEN_BRIGHTNESS_LOCK, it) }
@@ -171,10 +171,10 @@ fun FeaturesScreen(viewModel: FeaturesViewModel = viewModel()) {
         }
 
         // --- TOUCH & SCREEN ---
-        item { SectionHeader("Touch & Screen") }
+        item { SectionHeader("Touch & Controls") }
         item {
             FeatureModalCard(
-                title = "Ghost & Auto-Touch Fixer",
+                title = "Touch Calibration",
                 status = "Touch Calibration: $calibrationState",
                 icon = Icons.Default.PanTool,
                 onClick = { activeModal = ActiveModal.GHOST_TOUCH }
@@ -182,26 +182,18 @@ fun FeaturesScreen(viewModel: FeaturesViewModel = viewModel()) {
         }
         item {
             FeatureModalCard(
-                title = "V-Sensitivity Engine",
+                title = "Virtual Sensitivity",
                 status = "X: ${(vSensX * 100).toInt()}% | Y: ${(vSensY * 100).toInt()}% | Z: ${(vSensZ * 100).toInt()}%",
                 icon = Icons.Default.ControlCamera,
                 onClick = { activeModal = ActiveModal.VSENSITIVITY }
             )
         }
-        item {
-            FeatureModalCard(
-                title = "Touch Response & Sampling Rate Booster",
-                status = "Touch Response: $sensitivityProfile",
-                icon = Icons.Default.TouchApp,
-                onClick = { activeModal = ActiveModal.TOUCH_RESPONSE }
-            )
-        }
 
         // --- SOUND & FX ---
-        item { SectionHeader("Sound & FX") }
+        item { SectionHeader("Sound & Audio") }
         item {
             FeatureModalCard(
-                title = "In-Game Footstep & Audio Equalizer",
+                title = "Audio Equalizer",
                 status = "Audio Mode: $audioMode",
                 icon = Icons.Default.VolumeUp,
                 onClick = { activeModal = ActiveModal.AUDIO_EQ }
@@ -209,10 +201,10 @@ fun FeaturesScreen(viewModel: FeaturesViewModel = viewModel()) {
         }
 
         // --- NETWORK & CONNECTIVITY ---
-        item { SectionHeader("Network & Connectivity") }
+        item { SectionHeader("Network & Latency") }
         item {
             FeatureModalCard(
-                title = "Advanced DND Engine",
+                title = "Do Not Disturb",
                 status = "Third-Party: ${if(dndThirdParty) "Blocked" else "Allowed"} | Calls: ${if(dndCalls) "Muted" else "Allowed"}",
                 icon = Icons.Default.DoNotDisturbOn,
                 onClick = { activeModal = ActiveModal.DND }
@@ -220,7 +212,7 @@ fun FeaturesScreen(viewModel: FeaturesViewModel = viewModel()) {
         }
         item {
             FeatureToggleCard(
-                title = "Network Latency Saver",
+                title = "Latency Optimizer (Ping Management)",
                 status = if (networkLatencySaver) "Priority Bandwidth: ON" else "Priority Bandwidth: OFF",
                 icon = Icons.Default.Speed,
                 state = networkLatencySaver,
@@ -229,8 +221,8 @@ fun FeaturesScreen(viewModel: FeaturesViewModel = viewModel()) {
         }
         item {
             FeatureToggleCard(
-                title = "Dedicated Game Network Bandwidth",
-                status = if (dedicatedBandwidth) "Bandwidth Priority: 100% Game Dedicated" else "Bandwidth Priority: Normal",
+                title = "Network Traffic Manager",
+                status = "Prioritizes gaming network bandwidth",
                 icon = Icons.Default.WifiTethering,
                 state = dedicatedBandwidth,
                 onCheckedChange = { viewModel.setBoolean(SettingsRepository.DEDICATED_BANDWIDTH, it) }
@@ -238,10 +230,10 @@ fun FeaturesScreen(viewModel: FeaturesViewModel = viewModel()) {
         }
 
         // --- BATTERY & POWER ---
-        item { SectionHeader("Battery & Power") }
+        item { SectionHeader("Battery & Thermal") }
         item {
             FeatureModalCard(
-                title = "Smart Thermal & Cooling Control",
+                title = "Thermal Controller",
                 status = "Thermal Mode: $thermalProfile",
                 icon = Icons.Default.AcUnit,
                 onClick = { activeModal = ActiveModal.THERMAL }
@@ -351,7 +343,7 @@ fun VSensitivityModalContent(viewModel: FeaturesViewModel) {
     val x by viewModel.vSensX.collectAsState()
     val y by viewModel.vSensY.collectAsState()
     val z by viewModel.vSensZ.collectAsState()
-    Text("V-Sensitivity Engine", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(bottom = 16.dp))
+    Text("Virtual Sensitivity", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(bottom = 16.dp))
     SliderSetting("X-Axis Touch Response", x, 0f..10f) { viewModel.setFloat(SettingsRepository.VSENS_X, it) }
     SliderSetting("Y-Axis Touch Response", y, 0f..10f) { viewModel.setFloat(SettingsRepository.VSENS_Y, it) }
     SliderSetting("Z-Axis Touch Response", z, 0f..10f) { viewModel.setFloat(SettingsRepository.VSENS_Z, it) }
@@ -363,7 +355,7 @@ fun HardwareDisplayModalContent(viewModel: FeaturesViewModel) {
     val refreshLock by viewModel.refreshLock.collectAsState()
     val showLiveFps by viewModel.showLiveFps.collectAsState()
     val liveFps by viewModel.liveFps.collectAsState()
-    Text("Hardware Display & Refresh Rate Lock", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(bottom = 16.dp))
+    Text("Refresh Rate Stabilizer", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(bottom = 16.dp))
     ToggleSetting("SurfaceFlinger Hardware Sync", hwSync) { viewModel.setBoolean(SettingsRepository.HW_SYNC, it) }
     ToggleSetting("Refresh Rate Lock", refreshLock) { viewModel.setBoolean(SettingsRepository.REFRESH_LOCK, it) }
     ToggleSetting("Real-time Hardware FPS Detector", showLiveFps) { viewModel.setBoolean(SettingsRepository.LIVE_FPS, it) }
@@ -383,7 +375,7 @@ fun DNDModalContent(viewModel: FeaturesViewModel) {
     val tp by viewModel.dndThirdParty.collectAsState()
     val calls by viewModel.dndCalls.collectAsState()
     val sms by viewModel.dndSms.collectAsState()
-    Text("Advanced DND Engine", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(bottom = 16.dp))
+    Text("Do Not Disturb", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(bottom = 16.dp))
     ToggleSetting("Third-Party App DND", tp) { viewModel.setBoolean(SettingsRepository.DND_THIRD_PARTY, it) }
     ToggleSetting("System Call DND", calls) { viewModel.setBoolean(SettingsRepository.DND_CALLS, it) }
     ToggleSetting("SMS/System Notification DND", sms) { viewModel.setBoolean(SettingsRepository.DND_SMS, it) }
@@ -393,7 +385,7 @@ fun DNDModalContent(viewModel: FeaturesViewModel) {
 fun ThermalModalContent(viewModel: FeaturesViewModel) {
     val tg by viewModel.thermalGovernor.collectAsState()
     val tp by viewModel.thermalProfile.collectAsState()
-    Text("Smart Thermal & Cooling Control", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(bottom = 16.dp))
+    Text("Thermal Controller", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(bottom = 16.dp))
     ToggleSetting("CPU Throttling Governor", tg) { viewModel.setBoolean(SettingsRepository.THERMAL_GOVERNOR, it) }
     Spacer(modifier = Modifier.height(16.dp))
     Text("Thermal Profiles", style = MaterialTheme.typography.labelLarge)
@@ -408,7 +400,7 @@ fun ThermalModalContent(viewModel: FeaturesViewModel) {
 fun GPUModalContent(viewModel: FeaturesViewModel) {
     val fo by viewModel.forceOptimize.collectAsState()
     val rnd by viewModel.renderer.collectAsState()
-    Text("GPU Render Optimizer", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(bottom = 16.dp))
+    Text("Graphics Renderer", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(bottom = 16.dp))
     ToggleSetting("Force-optimize system graphics", fo) { viewModel.setBoolean(SettingsRepository.FORCE_OPTIMIZE, it) }
     Spacer(modifier = Modifier.height(16.dp))
     Text("Renderer", style = MaterialTheme.typography.labelLarge)
@@ -441,7 +433,7 @@ fun TouchResponseModalContent(viewModel: FeaturesViewModel) {
 fun AudioEqModalContent(viewModel: FeaturesViewModel) {
     val sa by viewModel.spatialAudio.collectAsState()
     val mode by viewModel.audioMode.collectAsState()
-    Text("In-Game Footstep & Audio Equalizer", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(bottom = 16.dp))
+    Text("Audio Equalizer", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(bottom = 16.dp))
     ToggleSetting("Spatial Audio Clarity", sa) { viewModel.setBoolean(SettingsRepository.SPATIAL_AUDIO, it) }
     Spacer(modifier = Modifier.height(16.dp))
     Text("Audio Mode", style = MaterialTheme.typography.labelLarge)
@@ -470,7 +462,7 @@ fun GhostTouchModalContent(viewModel: FeaturesViewModel) {
     val gf by viewModel.ghostFilter.collectAsState()
     val ath by viewModel.autoTouchHeat.collectAsState()
     val calib by viewModel.calibrationState.collectAsState()
-    Text("Ghost & Auto-Touch Fixer", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(bottom = 16.dp))
+    Text("Touch Calibration", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(bottom = 16.dp))
     ToggleSetting("Filter Accidental Ghost-Touches", gf) { viewModel.setBoolean(SettingsRepository.GHOST_FILTER, it) }
     ToggleSetting("Anti Heat-Induced Auto-Touch", ath) { viewModel.setBoolean(SettingsRepository.AUTO_TOUCH_HEAT, it) }
     Spacer(modifier = Modifier.height(16.dp))
@@ -492,7 +484,7 @@ fun ScreenRecorderModalContent(viewModel: FeaturesViewModel) {
     val audio by viewModel.recorderAudioSource.collectAsState()
     val orientation by viewModel.recorderOrientation.collectAsState()
 
-    Text("Hardware Screen Recorder", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(bottom = 16.dp))
+    Text("Screen Recorder", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(bottom = 16.dp))
     ToggleSetting("Enable Recording Engine", enabled) { viewModel.setBoolean(SettingsRepository.RECORDER_ENABLED, it) }
     
     Spacer(modifier = Modifier.height(16.dp))

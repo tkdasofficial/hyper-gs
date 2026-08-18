@@ -1,4 +1,4 @@
 <resources>
-    <string name="app_name">Hyper GS</string>
-    <string name="accessibility_service_description">Hyper GS V-Sensitivity Engine requires Accessibility permissions to inject scaled touch events for advanced game sensitivity tuning.</string>
+    <string name="app_name">Hyper Game Space</string>
+    <string name="accessibility_service_description">Hyper Game Space V-Sensitivity Engine requires Accessibility permissions to inject scaled touch events for advanced game sensitivity tuning.</string>
 </resources>

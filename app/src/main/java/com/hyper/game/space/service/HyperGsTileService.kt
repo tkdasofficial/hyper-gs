@@ -34,7 +34,16 @@ class HyperGsTileService : TileService() {
         scope.launch {
             repository.saveBoolean(SettingsRepository.MASTER_TOGGLE, newState)
             updateTileUI(newState)
-            if (!newState) {
+            
+            if (newState) {
+                val intent = Intent(applicationContext, AutoGameDetectService::class.java)
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                    startForegroundService(intent)
+                } else {
+                    startService(intent)
+                }
+            } else {
+                stopService(Intent(applicationContext, AutoGameDetectService::class.java))
                 stopService(Intent(applicationContext, OverlayService::class.java))
             }
         }
@@ -50,7 +59,7 @@ class HyperGsTileService : TileService() {
     private fun updateTileUI(isActive: Boolean) {
         val tile = qsTile ?: return
         tile.state = if (isActive) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
-        tile.label = if (isActive) "Hyper GS: ACTIVE" else "Hyper GS: OFF"
+        tile.label = if (isActive) "Hyper Game Space: ON" else "Hyper Game Space: OFF"
         tile.updateTile()
     }
 

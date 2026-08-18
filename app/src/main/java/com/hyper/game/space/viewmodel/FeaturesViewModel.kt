@@ -170,7 +170,19 @@ class FeaturesViewModel(application: Application) : AndroidViewModel(application
         viewModelScope.launch { repository.saveBoolean(key, value) }
     }
     fun setFloat(key: androidx.datastore.preferences.core.Preferences.Key<Float>, value: Float) {
-        viewModelScope.launch { repository.saveFloat(key, value) }
+        viewModelScope.launch { 
+            repository.saveFloat(key, value)
+            if (key.name.startsWith("vsens_")) {
+                try {
+                    val intent = android.content.Intent(getApplication(), com.hyper.game.space.service.VSensitivityService::class.java).apply {
+                        action = com.hyper.game.space.service.VSensitivityService.ACTION_APPLY_SETTINGS
+                    }
+                    getApplication<Application>().startService(intent)
+                } catch (e: Exception) {
+                    android.util.Log.e("FeaturesViewModel", "Failed to start VSensitivityService", e)
+                }
+            }
+        }
     }
     fun setInt(key: androidx.datastore.preferences.core.Preferences.Key<Int>, value: Int) {
         viewModelScope.launch { repository.saveInt(key, value) }

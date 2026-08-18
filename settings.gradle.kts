@@ -22,6 +22,6 @@ dependencyResolutionManagement {
   }
 }
 
-rootProject.name = "Hyper GS"
+rootProject.name = "Hyper Game Space"
 
 include(":app")

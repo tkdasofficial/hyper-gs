@@ -40,7 +40,7 @@
 
         <service
             android:name=".service.HyperGsTileService"
-            android:label="Hyper GS"
+            android:label="Hyper Game Space"
             android:icon="@drawable/ic_qs_tile"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
             android:exported="true">

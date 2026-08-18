@@ -61,7 +61,16 @@ class SettingsRepository(private val context: Context) {
         val RECORDER_BITRATE = intPreferencesKey("recorder_bitrate")
         val RECORDER_AUDIO_SOURCE = stringPreferencesKey("recorder_audio_source")
         val RECORDER_ORIENTATION = stringPreferencesKey("recorder_orientation")
+        
+        val ENABLED_GAMES = stringSetPreferencesKey("enabled_games")
     }
+
+    suspend fun saveStringSet(key: Preferences.Key<Set<String>>, value: Set<String>) {
+        context.dataStore.edit { prefs -> prefs[key] = value }
+    }
+
+    fun getStringSet(key: Preferences.Key<Set<String>>, default: Set<String>): Flow<Set<String>> =
+        context.dataStore.data.map { prefs -> prefs[key] ?: default }
 
     suspend fun saveBoolean(key: Preferences.Key<Boolean>, value: Boolean) {
         context.dataStore.edit { prefs -> prefs[key] = value }

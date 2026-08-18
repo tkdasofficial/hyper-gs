@@ -22,6 +22,9 @@ import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.hyper.game.space.ui.CornerTrigger
 import com.hyper.game.space.ui.OverlayModal
+import com.hyper.game.space.data.SettingsRepository
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 
 class OverlayService : Service() {
     private var windowManager: WindowManager? = null
@@ -68,7 +71,35 @@ class OverlayService : Service() {
     private fun showHud() {
         if (hudView != null) return
         
-        hudView = com.hyper.game.space.ui.ActivationHudView(this) { hideHud() }
+        val repository = SettingsRepository(this)
+        var ramBoost = false
+        var dnd = false
+        var overload = false
+        var vSens = false
+        var recorder = false
+        
+        var vSensLabel = "Virtual Sensitivity"
+        runBlocking {
+            ramBoost = repository.getBoolean(SettingsRepository.AUTO_RAM_BOOST, true).first()
+            dnd = repository.getBoolean(SettingsRepository.DND_THIRD_PARTY, false).first()
+            overload = repository.getBoolean(SettingsRepository.OVERLOAD_OPTIMIZER, true).first()
+            val vSensInstance = com.hyper.game.space.service.VSensitivityService.instance
+            vSens = vSensInstance != null
+            if (vSensInstance != null) {
+                vSensLabel = String.format("Virtual Sensitivity: %.1fx", vSensInstance.currentMultiplier)
+            }
+            recorder = repository.getBoolean(SettingsRepository.RECORDER_ENABLED, true).first()
+        }
+        
+        val features = listOf(
+            Pair("Memory Optimizer", ramBoost),
+            Pair("Do Not Disturb", dnd),
+            Pair("System Optimizer", overload),
+            Pair("Screen Recorder", recorder),
+            Pair(vSensLabel, vSens)
+        )
+        
+        hudView = com.hyper.game.space.ui.ActivationHudView(this, features) { hideHud() }
 
         val type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) 
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY else WindowManager.LayoutParams.TYPE_PHONE
@@ -93,7 +124,7 @@ class OverlayService : Service() {
         topLeftView = createTriggerView(isLeft = true)
         topRightView = createTriggerView(isLeft = false)
         
-        val size = (50 * resources.displayMetrics.density).toInt()
+        val size = (80 * resources.displayMetrics.density).toInt()
         
         val type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) 
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY else WindowManager.LayoutParams.TYPE_PHONE
